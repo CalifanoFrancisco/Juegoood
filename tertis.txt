@@ -1,0 +1,690 @@
+#include <iostream>
+#include <stdlib.h>
+#include <time.h>
+#include <string>
+#include <curses.h> //Para linux, usar comando en consola: sudo apt-get install libncurses5-dev libncursesw5-dev
+
+//-----Flechas-----------+
+#define KEY_ENTER '\r' //|
+#define KEY_UP     72  //|
+#define KEY_DOWN   80  //|
+#define KEY_LEFT   75  //|
+#define KEY_RIGHT  77  //|
+//-----------------------+
+
+using namespace std;
+
+//Tertis
+//Display 80 horizontal = x
+//Display 24 vertical   = y
+//Area x de juego? = 10
+
+//Duplicar tamaño fichas
+//    +-----------------------------------------+
+//    |FICHAS                                   |
+//    +-----+-----+----+-----+-----+------+-----+
+//    | @@  |  @@ | @@ | @   |   @ |      |  @  |
+//    |  @@ | @@  | @@ | @@@ | @@@ | @@@@ | @@@ |
+//    +-----+-----+----+-----+-----+------+-----+
+
+void rellenador (string matriz[80][24]){             //Rellena de #
+    for(int y=0;y<24;y++){
+        for(int x=0;x<80;x++){
+            matriz[x][y]="#";
+        }
+    }
+}
+
+int random_valor(){                                 //Hay solamente 7 fichas
+    int iSecret;
+    srand (time(NULL));
+    iSecret = rand() % 7 + 1;
+    return iSecret;
+}
+
+void insertar   (string matriz[80][24], string palabra, int x, int y){
+    for(int pos=0;pos<palabra.size();pos++){
+        matriz[x+pos][y]=palabra[pos];
+    }
+}
+
+void grilla     (string matriz[80][24], int decorado){    //Crea las rayitas y eso + menu principal si decorado==1
+
+    if(decorado==1){                //pantalla inicial
+         for(int y=0;y<24;y++){
+            for(int x=0;x<80;x++){
+                if(x<20 || x>58){
+                    matriz[x][y]="/";
+                }else{
+                    matriz[x][y]=" ";
+                }
+            }
+        }
+    }else{                      //Pantalla juego
+        for(int y=0;y<24;y++){
+            for(int x=0;x<80;x++){
+                if((y==3 && x<20) || (y==3 && x>59)){
+                    matriz[x][y]="-";
+                }else if(x==20 || x==59){
+                    if(y==3){
+                        matriz[x][y]="+";
+                    }else{
+                        matriz[x][y]="|";
+                    }
+                }else{
+                    matriz[x][y]=" ";
+                }
+            }
+        }
+    }
+}
+
+void delay      (int milisegundos){                       //Delay para el timer
+    milisegundos*=1000;
+    clock_t start_time = clock();
+    while (clock() < start_time + milisegundos);
+}
+
+void displayer  (string matriz[80][24]){              //Displayea
+    for(int y=0;y<23;y++){
+        for(int x=0;x<80;x++){
+            cout<<matriz[x][y]<<"";
+        }cout<<endl;
+    }
+    cout<<"<//////////////////////////////////////////////////////////////////////////////>"<<endl;
+}
+
+void timer      (string matriz[80][24],int segundos){     //Inserta en matriz el timer
+    int minutos=segundos/60;
+    segundos-=minutos*60;
+    string minu=to_string(minutos);
+    string segu=to_string(segundos);
+    insertar(matriz,"Tiempo:"    ,3,9); //Tiempo
+    if(minutos>=0 && minutos<10){        //SI acomoda la posicion de _1 a 01
+        insertar(matriz," ",3,10);
+        insertar(matriz,minu,4,10);
+    }else{
+        insertar(matriz,minu,3,10);
+    }
+    insertar(matriz,":",5,10);          //El divisor
+    if(segundos==0){
+        insertar(matriz,"00",6,10);
+    }else if(segundos>0 && segundos<10){
+        insertar(matriz,"0" ,6,10);
+        insertar(matriz,segu,7,10);
+    }else{
+        insertar(matriz,segu,6,10);
+    }
+}
+
+void puntajeador(string matriz[80][24],int puntaje){//Inserta en matriz el puntaje
+    string puntos=to_string(puntaje);
+    insertar(matriz,"Puntaje: "  ,3,6); //Puntos
+    insertar(matriz,puntos       ,3,7);
+}
+
+void cursor     (string matriz[80][24],int pos){         //Recibe un valor 1,2,3,4 y cambia de posicion el cursor
+    int puntox=24;
+    int puntoy=10;
+    string icono="@";
+    if      (pos==1){       //Jugar
+        insertar(matriz,icono,puntox,puntoy+0);
+    }else if(pos==2){       //Puntajes
+        insertar(matriz,icono,puntox,puntoy+3);
+    }else{                  //Salir
+        insertar(matriz,icono,puntox,puntoy+8);
+    }
+}
+
+bool flechasmenu(int &valor){                             //INCOMPLETO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    //Hacer qye reciba el input de las flechas
+    //Valores de 1 a 4
+    //Solo habilitar arriba y abajo
+    //Habilitar enter tmb
+    bool teclarriba=0,teclabajo=0;
+    bool enter=0;
+    bool tecla=0;
+    //cin>>tecla;
+    if(teclarriba==true){       //Si sube
+        if(valor<4){
+            valor++;
+        }
+    }else if(teclabajo ==true){ //Si baja
+        if(valor>0){
+            valor--;
+        }
+    }else if(tecla==enter){
+        tecla=true;
+    }
+    return tecla;
+}
+
+int flechasgame (){                                       //INCOMPLETO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //Input flechas del juego
+    //Arriba, abajo, izq, der
+}
+
+void menu_principal(string matriz[80][24]){         //Crea el menu inicial
+    grilla  (matriz,1);                             //Crea "rayas"(divisiones) en la matriz
+    insertar(matriz,"- T E T R I S -",32,3);
+    int puntox=26;
+    int puntoy=10;
+    insertar(matriz,"Jugar"   ,puntox,puntoy+0);
+    insertar(matriz,"Puntajes",puntox,puntoy+3);
+    insertar(matriz,"Salir"   ,puntox,puntoy+8);
+
+    int posicion_cursor=0;
+    bool sno=false;
+    while(sno==false){
+        //sno=flechas_menu(posicion_cursor);  //Recibe input del teclado
+        cursor(matriz,posicion_cursor);     //Cambia de lugar el cursor
+        displayer(matriz);                  //Displayea
+    }
+}
+
+void perdiste   (string matriz[80][24],int puntaje){   //Pantalla de perdiste
+    int puntox=24;
+    int puntoy=8;
+    string a="cghfdjhfdhgjkdshasjkhdhiurhgreh",puntos;
+    puntos=to_string(puntaje);
+    while(a=="cghfdjhfdhgjkdshasjkhdhiurhgreh"){
+        grilla(matriz,1);
+        insertar(matriz,"Perdiste!"           ,puntox+10,puntoy-4 );
+        insertar(matriz,"Puntaje: "           ,puntox   ,puntoy+4 );
+        insertar(matriz,puntos                ,puntox+10,puntoy+4 );
+        insertar(matriz,"Presione cualquier"  ,puntox   ,puntoy+8 );
+        insertar(matriz,"tecla para continuar",puntox   ,puntoy+9 );
+        insertar(matriz,"y luego enter"       ,puntox   ,puntoy+10);
+        displayer(matriz);
+        cin>>a;
+        system("clear");
+    }
+}
+
+void interfaz_juego(string matriz[80][24],int puntaje,int segundos){
+    grilla     (matriz,0);
+    insertar   (matriz,"T E T R I S",4,1); //Titulo
+    puntajeador(matriz,puntaje);
+    timer      (matriz,segundos);
+}
+
+void juego      (string matriz[80][24]){
+    int segundos=0;
+    int puntaje=0;
+    bool game=true;
+    while(game==true){  //Si perdes game=false
+        interfaz_juego(matriz,puntaje,segundos);
+        displayer(matriz);
+        segundos++;
+        delay(1000);
+        system("clear");
+        //if(segundos==3){   game=false; }
+    }
+    perdiste(matriz,puntaje);
+    menu_principal(matriz);
+}
+
+void copiador   (string original[80][24],string matriz_a_copiar[39][24]){       //Copia matriz de fichas  a la matriz de display
+    for(int y=0;y<24;y++){
+        for(int x=0;x<38;x++){
+            //original[x+21][y]="a";
+            original[x+21][y]=matriz_a_copiar[x][y];
+        }
+    }
+}
+
+void fichas_displayer(bool ficha[5][8][8],string caracter){
+    for(int R=1;R<5;R++){
+        cout<<"Rotacion N°"<<R<<": "<<endl;
+        for(int y=0;y<8;y++){
+            for(int x=0;x<8;x++){
+                if(ficha[R][x][y]==true){   cout<<caracter;}
+                else{                       cout<<" ";     }
+            }cout<<endl;
+        }cout<<endl;
+    }
+    cout<<"-------------------------------------------------"<<endl;
+}
+
+void fichasyvalor(int npieza,bool ficha[5][8][8]){                                                                  //Crea las fichas
+    //Entre 20 y 58
+    //    +-----------------------------------------+
+    //    |FICHAS                                   |
+    //    +-----+-----+----+-----+-----+------+-----+
+    //    | @@  |  @@ | @@ | @   |   @ |      |  @  |
+    //    |  @@ | @@  | @@ | @@@ | @@@ | @@@@ | @@@ |
+    //    +-----+-----+----+-----+-----+------+-----+
+    //    |  B) |  B) | B) |  B) |  B) |  B)  |  B) |
+    //    +-----+-----+----+-----+-----+------+-----+
+
+    if      (npieza==0){
+        bool pieza1[5][8][8]=   //  ##
+        {                       // ##
+        {   {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {0,0,1,1,1,1,0,0},
+            {0,0,1,1,1,1,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {0,0,1,1,1,1,0,0},
+            {0,0,1,1,1,1,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        }, {
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        }
+        };
+        ficha=pieza1;
+    }else if(npieza==1){
+         bool pieza2[5][8][8]=   // ##
+        {                       //  ##
+        {   {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,1,1,1,1,0,0},
+            {0,0,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,1,1,1,1,0,0},
+            {0,0,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        }
+        };
+        ficha=pieza2;
+    }else if(npieza==2){
+        bool pieza3[5][8][8]=   // ##
+        {                       // ##
+        {
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        }
+        };
+        ficha=pieza3;
+    }else if(npieza==3){
+        bool pieza4[5][8][8]=   // #
+        {                       // ###
+        {
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+        {
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+        {
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,1,1,0,0},
+            {0,0,0,0,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+        {
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+        };
+        ficha=pieza4;
+    }else if(npieza==4){
+        bool pieza5[5][8][8]=  //   #
+        {                      // ###
+        {
+            {0,0,0,0,1,1,0,0},
+            {0,0,0,0,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+        {
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+        {
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+        {
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {0,0,0,0,1,1,0,0},
+            {0,0,0,0,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },
+    };
+        ficha=pieza5;
+    }else if(npieza==5){
+        bool pieza6[5][8][8]=   // ####
+     {                           //
+        {
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+        },{
+            {1,1,1,1,1,1,1,1},
+            {1,1,1,1,1,1,1,1},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+        },{
+            {1,1,1,1,1,1,1,1},
+            {1,1,1,1,1,1,1,1},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+        },
+        };
+        ficha=pieza6;
+    }else if(npieza==6){
+        bool pieza7[5][8][8]=   //  #
+    {                       // ###
+        {
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {1,1,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {1,1,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        },{
+            {0,0,1,1,0,0,0,0},
+            {0,0,1,1,0,0,0,0},
+            {1,1,1,1,1,1,0,0},
+            {1,1,1,1,1,1,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0},
+        }
+        };
+        ficha=pieza7;
+    }
+    cout<<"Ficha: "<<endl; for(int y=0;y<8;y++){for(int x=0;x<8;x++){/*cout<<ficha[1][x][y]<<" "*/;if(ficha[1][x][y]>0){cout<<"%";}else{cout<<"-";}}cout<<endl;}
+
+
+    //fichas_displayer(ficha,"#");
+}
+
+void insertar_fichas(string juego[39][24],string matriz[80][24]){
+    int    x=0;
+    int    y=0;
+    bool   ficha[5][8][8];
+    string simbolo="@";
+
+    int coso=random_valor();
+    coso=0;
+    fichasyvalor(coso,ficha);
+
+    //for(int y=0;y<8;y++)
+    cout<<"Ficha: "<<endl;
+    for(int y=0;y<8;y++){
+        for(int x=0;x<8;x++){
+            //cout<<ficha[1][x][y]<<" ";
+            if(ficha[coso][x][y]>0){cout<<"%";}else{cout<<"-";}
+        }cout<<endl;
+    }
+    cout<<endl<<"PQ NO SON IGUALES AAAAAA MATENME"<<endl;
+    cout<<"poner en global? :("<<endl;
+    cout<<endl;
+    for(int y=0;y<24;y++){
+        for(int x=0;x<39;x++){
+            if((x>0 || x<8) && (y>0||y<8)){
+                if(ficha[0][x][y]==true){
+                    juego[x][y]=simbolo;
+                }else{
+                    juego[x][y]=" ";
+                }
+            }else{
+                juego[x][y]=" ";
+            }
+        }
+    }
+
+    //copiador(matriz,juego);
+    //displayer(matriz);
+}
+
+void fichas_test(string matriz[39][24]){
+
+}
+
+int main(){
+
+    string matriz[80][24];      //Matriz principal
+    int puntaje=0;
+    int segundos=100;
+    interfaz_juego(matriz,puntaje,segundos);
+    //displayer(matriz);
+    //copiador(matriz,matriz);
+    //fichas_test(matriz);
+    //creador_fichas();
+    //juego(matriz);
+    //displayer(matriz);
+    string game[39][24];
+    insertar_fichas(game,matriz);
+    return 0;
+}
+
+
+
